@@ -1,6 +1,5 @@
-import { Heart, MapPin, Clock, ExternalLink, GraduationCap } from "lucide-react";
+import { Heart, MapPin, Clock, ExternalLink } from "lucide-react";
 import { Cafe } from "@/data/cafes";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -14,12 +13,6 @@ interface CafeCardProps {
 
 export function CafeCard({ cafe, isFavorite, onToggleFavorite }: CafeCardProps) {
   const [showMenu, setShowMenu] = useState(false);
-
-  const priceLabel = {
-    "$": "Budget (₱40–₱90)",
-    "$$": "Moderate (₱100–₱160)",
-    "$$$": "Premium (₱150+)",
-  };
 
   return (
     <div className="group rounded-lg border bg-card overflow-hidden transition-shadow hover:shadow-lg animate-fade-in">
@@ -43,43 +36,23 @@ export function CafeCard({ cafe, isFavorite, onToggleFavorite }: CafeCardProps) 
         >
           <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
         </button>
-        {cafe.studentFriendly && (
-          <div className="absolute top-2 left-2">
-            <Badge className="bg-student-friendly text-student-friendly-foreground text-xs gap-1">
-              <GraduationCap className="h-3 w-3" />
-              Student Friendly
-            </Badge>
-          </div>
-        )}
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-2">
-        <div className="flex items-start justify-between gap-2">
+      <div className="p-4 space-y-2 text-center">
+        <div className="flex flex-col items-center justify-center gap-1">
           <h3 className="text-lg font-semibold leading-tight">{cafe.name}</h3>
-          <span className="shrink-0 text-sm font-bold text-primary">{cafe.priceRange}</span>
         </div>
-
-        <p className="text-xs text-muted-foreground">{priceLabel[cafe.priceRange]}</p>
 
         <p className="text-sm text-muted-foreground line-clamp-2">{cafe.description}</p>
 
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
           <MapPin className="h-3 w-3 shrink-0" />
           <span className="truncate">{cafe.address}</span>
         </div>
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
           <Clock className="h-3 w-3 shrink-0" />
           <span>{cafe.hours}</span>
-        </div>
-
-        {/* Tags */}
-        <div className="flex flex-wrap gap-1 pt-1">
-          {cafe.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">
-              {tag}
-            </Badge>
-          ))}
         </div>
 
         {/* Actions */}

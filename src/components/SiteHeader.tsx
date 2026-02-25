@@ -16,20 +16,28 @@ export function SiteHeader({ dark, toggleTheme }: SiteHeaderProps) {
 
   const links = [
     { to: "/", label: "Home" },
-    { to: "/cafes", label: "Explore Cafes" },
+    { to: "/cafes", label: "Cafes" },
     { to: "/favorites", label: "Favorites" },
   ];
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
-      <div className="container flex h-14 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 text-lg font-bold text-primary">
-          <Coffee className="h-5 w-5" />
-          <span><span className="italic">Kape</span><span className="font-extrabold">Tayo!</span></span>
-        </Link>
+      <div className="container max-w-5xl mx-auto px-4 py-2">
+        <div className="relative flex items-center justify-center py-1">
+          <Link to="/" className="flex items-center gap-2 text-lg font-bold text-primary">
+            <Coffee className="h-5 w-5" />
+            <span><span className="italic">Kape</span><span className="font-extrabold">Tayo!</span></span>
+          </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1">
+          <div className="absolute right-0 flex md:hidden items-center gap-1">
+            <ThemeToggle dark={dark} toggle={toggleTheme} />
+            <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
+        </div>
+
+        <nav className="hidden md:flex items-center justify-center gap-1 pt-2 border-t">
           {links.map((l) => (
             <Link
               key={l.to}
@@ -48,17 +56,10 @@ export function SiteHeader({ dark, toggleTheme }: SiteHeaderProps) {
           <ThemeToggle dark={dark} toggle={toggleTheme} />
         </nav>
 
-        {/* Mobile */}
-        <div className="flex md:hidden items-center gap-1">
-          <ThemeToggle dark={dark} toggle={toggleTheme} />
-          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
-        </div>
       </div>
 
       {mobileOpen && (
-        <nav className="md:hidden border-t bg-background px-4 pb-3 pt-2 space-y-1 animate-fade-in">
+        <nav className="md:hidden border-t bg-background px-4 pb-3 pt-2 space-y-1 animate-fade-in text-center">
           {links.map((l) => (
             <Link
               key={l.to}
