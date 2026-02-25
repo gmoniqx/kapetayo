@@ -56,7 +56,7 @@ export function CafeCard({ cafe, isFavorite, onToggleFavorite }: CafeCardProps) 
       {/* Content */}
       <div className="p-4 space-y-2">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-display text-lg font-semibold leading-tight">{cafe.name}</h3>
+          <h3 className="text-lg font-semibold leading-tight">{cafe.name}</h3>
           <span className="shrink-0 text-sm font-bold text-primary">{cafe.priceRange}</span>
         </div>
 
