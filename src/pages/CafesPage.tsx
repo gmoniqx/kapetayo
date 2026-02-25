@@ -59,31 +59,26 @@ export default function CafesPage() {
   const [search, setSearch] = useState("");
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accountName, setAccountName] = useState("");
-  const [accountEmail, setAccountEmail] = useState("");
-  const [accountPassword, setAccountPassword] = useState("");
   const [accountBio, setAccountBio] = useState("Marikina Explorer");
   const [isAccountVisible, setIsAccountVisible] = useState(true);
   const [bookmarkedCafeIds, setBookmarkedCafeIds] = useState<string[]>(["2", "14", "1"]);
   const [visitedCafeIds, setVisitedCafeIds] = useState<string[]>(["3", "5"]);
   const isHomePage = location.pathname === "/";
+  const isDashboardPage = location.pathname === "/" || location.pathname === "/dashboard";
   const hasSearch = search.trim().length > 0;
-  const displayName = accountName.trim() || "KapeTayo User";
+  const displayName = accountName.trim() || "Coffee Lover";
+  const dashboardTitle = `Hi ${displayName}, kape tayo!`;
 
   useEffect(() => {
     const savedName = localStorage.getItem("kapetayo.account.name");
-    const savedEmail = localStorage.getItem("kapetayo.account.email");
     const savedBio = localStorage.getItem("kapetayo.account.bio");
-    const savedLoggedIn = localStorage.getItem("kapetayo.account.loggedIn");
     const savedAccountVisible = localStorage.getItem("kapetayo.account.visible");
     const savedBookmarks = localStorage.getItem("kapetayo.account.bookmarks");
     const savedVisited = localStorage.getItem("kapetayo.account.visited");
 
     if (savedName !== null) setAccountName(savedName);
-    if (savedEmail !== null) setAccountEmail(savedEmail);
     if (savedBio !== null) setAccountBio(savedBio);
-    if (savedLoggedIn !== null) setIsLoggedIn(savedLoggedIn === "true");
     if (savedAccountVisible !== null) setIsAccountVisible(savedAccountVisible === "true");
 
     if (savedBookmarks) {
@@ -114,16 +109,8 @@ export default function CafesPage() {
   }, [accountName]);
 
   useEffect(() => {
-    localStorage.setItem("kapetayo.account.email", accountEmail);
-  }, [accountEmail]);
-
-  useEffect(() => {
     localStorage.setItem("kapetayo.account.bio", accountBio);
   }, [accountBio]);
-
-  useEffect(() => {
-    localStorage.setItem("kapetayo.account.loggedIn", String(isLoggedIn));
-  }, [isLoggedIn]);
 
   useEffect(() => {
     localStorage.setItem("kapetayo.account.visible", String(isAccountVisible));
@@ -187,6 +174,12 @@ export default function CafesPage() {
     setVisitedCafeIds((currentIds) => (currentIds.includes(cafeId) ? currentIds : [...currentIds, cafeId]));
   };
 
+  const toggleVisited = (cafeId: string) => {
+    setVisitedCafeIds((currentIds) =>
+      currentIds.includes(cafeId) ? currentIds.filter((id) => id !== cafeId) : [...currentIds, cafeId],
+    );
+  };
+
   const offers: Offer[] = filtered.map((cafe) => ({
     id: cafe.id,
     tag: "",
@@ -212,7 +205,16 @@ export default function CafesPage() {
       <motion.div className="space-y-4" {...fadeUp}>
           <motion.div {...fadeUp}>
             <PageHeader
-              title={<><span className="italic">Kape</span><span className="font-extrabold">Tayo!</span></>}
+              title={
+                isDashboardPage ? (
+                  <span className="text-xl font-semibold leading-tight sm:text-2xl">{dashboardTitle}</span>
+                ) : (
+                  <>
+                    <span className="italic">Kape</span>
+                    <span className="font-extrabold">Tayo!</span>
+                  </>
+                )
+              }
               action={(
                 <div className="flex items-center gap-2">
                   <Button
@@ -391,7 +393,17 @@ export default function CafesPage() {
                       <div key={cafe.id} className="rounded-2xl border border-border/70 bg-card p-3">
                         <p className="text-base font-semibold text-card-foreground">{cafe.name}</p>
                         <p className="mt-1 text-sm text-muted-foreground">{cafe.address}</p>
-                        <p className="mt-2 text-xs text-muted-foreground">{cafe.hours}</p>
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <p className="text-xs text-muted-foreground">{cafe.hours}</p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 rounded-full px-3 text-[11px]"
+                            onClick={() => toggleVisited(cafe.id)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -418,14 +430,24 @@ export default function CafesPage() {
                       <p className="mt-1 text-sm text-muted-foreground">{cafe.address}</p>
                       <div className="mt-2 flex items-center justify-between gap-2">
                         <p className="text-sm text-muted-foreground">{cafe.hours}</p>
-                        <Button
-                          size="sm"
-                          variant={bookmarkedCafeIds.includes(cafe.id) ? "default" : "outline"}
-                          className="h-7 rounded-full px-3 text-[11px]"
-                          onClick={() => toggleBookmark(cafe.id)}
-                        >
-                          {bookmarkedCafeIds.includes(cafe.id) ? "Saved" : "Save"}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant={bookmarkedCafeIds.includes(cafe.id) ? "default" : "outline"}
+                            className="h-7 rounded-full px-3 text-[11px]"
+                            onClick={() => toggleBookmark(cafe.id)}
+                          >
+                            {bookmarkedCafeIds.includes(cafe.id) ? "Saved" : "Save"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={visitedCafeIds.includes(cafe.id) ? "default" : "outline"}
+                            className="h-7 rounded-full px-3 text-[11px]"
+                            onClick={() => toggleVisited(cafe.id)}
+                          >
+                            {visitedCafeIds.includes(cafe.id) ? "Visited" : "Mark Visited"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -470,6 +492,17 @@ export default function CafesPage() {
                   <p className="text-sm text-muted-foreground">Menu not available.</p>
                 )}
               </div>
+
+              <div className="flex items-center justify-end">
+                <Button
+                  size="sm"
+                  variant={visitedCafeIds.includes(selectedCafe.id) ? "default" : "outline"}
+                  className="rounded-full text-xs"
+                  onClick={() => toggleVisited(selectedCafe.id)}
+                >
+                  {visitedCafeIds.includes(selectedCafe.id) ? "Remove from visited" : "Add to visited"}
+                </Button>
+              </div>
             </div>
           ) : null}
         </DialogContent>
@@ -480,11 +513,7 @@ export default function CafesPage() {
           <div className="space-y-4">
             <DialogHeader>
               <DialogTitle>My Account</DialogTitle>
-              <DialogDescription>
-                {isLoggedIn
-                  ? "Edit your profile details. Changes are auto-saved."
-                  : "You can save all details even without creating an account. Login is optional."}
-              </DialogDescription>
+              <DialogDescription>Edit your profile details. Changes are auto-saved.</DialogDescription>
             </DialogHeader>
 
             <div className="space-y-2">
@@ -507,52 +536,10 @@ export default function CafesPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Email</p>
-              <Input
-                value={accountEmail}
-                onChange={(event) => setAccountEmail(event.target.value)}
-                placeholder="you@email.com"
-                type="email"
-                className="h-10 rounded-xl"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Password</p>
-              <Input
-                value={accountPassword}
-                onChange={(event) => setAccountPassword(event.target.value)}
-                placeholder="Enter password"
-                type="password"
-                className="h-10 rounded-xl"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2">
               <Button size="sm" className="rounded-full text-xs" onClick={() => setIsAccountOpen(false)}>
                 Save Changes
               </Button>
-
-              {isLoggedIn ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="rounded-full text-xs"
-                  onClick={() => setIsLoggedIn(false)}
-                >
-                  Log out
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="rounded-full text-xs"
-                  onClick={() => setIsLoggedIn(true)}
-                >
-                  Login / Create (Optional)
-                </Button>
-              )}
             </div>
           </div>
         </DialogContent>
