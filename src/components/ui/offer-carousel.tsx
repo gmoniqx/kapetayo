@@ -1,6 +1,6 @@
 import * as React from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Coffee, Tag } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, Coffee, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface Offer {
@@ -167,6 +167,18 @@ const OfferCarousel = React.forwardRef<HTMLDivElement, OfferCarouselProps>(
             <OfferCard key={offer.id} offer={offer} onClick={onOfferClick} />
           ))}
         </div>
+
+        {offers.length > 1 ? (
+          <motion.div
+            className="pointer-events-none absolute bottom-0 right-1 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm md:hidden"
+            initial={{ opacity: 0.45, x: 0 }}
+            animate={{ opacity: [0.45, 1, 0.45], x: [0, 4, 0] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <ArrowLeftRight className="h-3 w-3" />
+            <span>Swipe to browse</span>
+          </motion.div>
+        ) : null}
       </div>
     );
   },

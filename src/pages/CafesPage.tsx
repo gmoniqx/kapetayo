@@ -65,7 +65,7 @@ export default function CafesPage() {
   const [bookmarkedCafeIds, setBookmarkedCafeIds] = useState<string[]>(["2", "14", "1"]);
   const [visitedCafeIds, setVisitedCafeIds] = useState<string[]>(["3", "5"]);
   const isHomePage = location.pathname === "/";
-  const isDashboardPage = location.pathname === "/" || location.pathname === "/dashboard";
+  const isDashboardPage = location.pathname === "/dashboard";
   const hasSearch = search.trim().length > 0;
   const displayName = accountName.trim() || "Coffee Lover";
   const dashboardTitle = `Hi ${displayName}, kape tayo!`;
