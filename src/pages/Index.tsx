@@ -15,7 +15,7 @@ const Index = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
         <div className="relative z-10 container text-center px-4 py-20 space-y-6 max-w-2xl">
-          <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight leading-tight">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight">
             Discover the Best Cafes in{" "}
             <span className="text-gradient">Marikina City</span>
           </h1>
@@ -59,7 +59,7 @@ const Index = () => {
               <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                 <f.icon className="h-5 w-5 text-primary" />
               </div>
-              <h3 className="font-display text-base font-semibold">{f.title}</h3>
+              <h3 className="text-base font-semibold">{f.title}</h3>
               <p className="text-sm text-muted-foreground">{f.desc}</p>
             </div>
           ))}
@@ -68,7 +68,7 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-        <p>© 2026 KapeMarikina — Made for Marikina coffee lovers ☕</p>
+        <p>© 2026 <span className="italic">Kape</span><span className="font-bold">Tayo!</span> — Made for Marikina coffee lovers ☕</p>
       </footer>
     </div>
   );

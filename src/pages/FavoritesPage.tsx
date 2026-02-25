@@ -12,7 +12,7 @@ export default function FavoritesPage() {
   return (
     <div className="container py-6 px-4 space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-bold">Your Favorites</h1>
+        <h1 className="text-2xl font-bold">Your Favorites</h1>
         <p className="text-sm text-muted-foreground">{favCafes.length} saved cafe{favCafes.length !== 1 ? "s" : ""}</p>
       </div>
 

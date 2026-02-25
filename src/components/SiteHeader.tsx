@@ -23,9 +23,9 @@ export function SiteHeader({ dark, toggleTheme }: SiteHeaderProps) {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
       <div className="container flex h-14 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold text-primary">
+        <Link to="/" className="flex items-center gap-2 text-lg font-bold text-primary">
           <Coffee className="h-5 w-5" />
-          <span>KapeMarikina</span>
+          <span><span className="italic">Kape</span><span className="font-extrabold">Tayo!</span></span>
         </Link>
 
         {/* Desktop nav */}
