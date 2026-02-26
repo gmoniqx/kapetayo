@@ -11,7 +11,7 @@ import { AnimatedThemeToggle } from "@/components/ui/animated-theme-toggle";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MobilePageShell } from "@/components/layout/MobilePageShell";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { AvatarPicker } from "@/components/ui/avatar-picker";
+import { avatarOptions, AvatarPicker } from "@/components/ui/avatar-picker";
 
 const normalizeSearch = (value: string) =>
   value
@@ -62,24 +62,44 @@ export default function CafesPage() {
   const [accountName, setAccountName] = useState("");
   const [accountBio, setAccountBio] = useState("Marikina Explorer");
   const [isAccountVisible, setIsAccountVisible] = useState(true);
+  const [chosenAvatarId, setChosenAvatarId] = useState<number | null>(() => {
+    const savedAvatarId = localStorage.getItem("kapetayo.account.avatarConfirmedId");
+    if (!savedAvatarId) return null;
+
+    const parsedAvatarId = Number(savedAvatarId);
+    return Number.isFinite(parsedAvatarId) ? parsedAvatarId : null;
+  });
+  const [hasChosenAvatar, setHasChosenAvatar] = useState(
+    () => localStorage.getItem("kapetayo.account.avatarConfirmedId") !== null,
+  );
   const [bookmarkedCafeIds, setBookmarkedCafeIds] = useState<string[]>(["2", "14", "1"]);
   const [visitedCafeIds, setVisitedCafeIds] = useState<string[]>(["3", "5"]);
   const isHomePage = location.pathname === "/";
   const isDashboardPage = location.pathname === "/dashboard";
+  const isCafesPage = location.pathname === "/cafes";
   const hasSearch = search.trim().length > 0;
   const displayName = accountName.trim() || "Coffee Lover";
+  const hasSetName = accountName.trim().length > 0;
   const dashboardTitle = `Hi ${displayName}, kape tayo!`;
 
   useEffect(() => {
     const savedName = localStorage.getItem("kapetayo.account.name");
     const savedBio = localStorage.getItem("kapetayo.account.bio");
     const savedAccountVisible = localStorage.getItem("kapetayo.account.visible");
+    const savedAvatarId = localStorage.getItem("kapetayo.account.avatarConfirmedId");
     const savedBookmarks = localStorage.getItem("kapetayo.account.bookmarks");
     const savedVisited = localStorage.getItem("kapetayo.account.visited");
 
     if (savedName !== null) setAccountName(savedName);
     if (savedBio !== null) setAccountBio(savedBio);
     if (savedAccountVisible !== null) setIsAccountVisible(savedAccountVisible === "true");
+    if (savedAvatarId !== null) {
+      const parsedAvatarId = Number(savedAvatarId);
+      if (Number.isFinite(parsedAvatarId)) {
+        setChosenAvatarId(parsedAvatarId);
+        setHasChosenAvatar(true);
+      }
+    }
 
     if (savedBookmarks) {
       try {
@@ -123,6 +143,11 @@ export default function CafesPage() {
   useEffect(() => {
     localStorage.setItem("kapetayo.account.visited", JSON.stringify(visitedCafeIds));
   }, [visitedCafeIds]);
+
+  const chosenAvatar = useMemo(() => {
+    if (chosenAvatarId === null) return null;
+    return avatarOptions.find((avatar) => avatar.id === chosenAvatarId) ?? null;
+  }, [chosenAvatarId]);
 
   const filtered = useMemo(() => {
     return cafes.filter((c) => {
@@ -206,7 +231,7 @@ export default function CafesPage() {
           <motion.div {...fadeUp}>
             <PageHeader
               title={
-                isDashboardPage ? (
+                isDashboardPage || (isCafesPage && hasSetName) ? (
                   <span className="text-xl font-semibold leading-tight sm:text-2xl">{dashboardTitle}</span>
                 ) : (
                   <>
@@ -287,8 +312,15 @@ export default function CafesPage() {
               </div>
               {isAccountVisible ? (
                 <>
-                  <p className="text-xs text-muted-foreground">{displayName} • {accountBio}</p>
-                  <AvatarPicker />
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-muted-foreground">{displayName} • {accountBio}</p>
+                    {chosenAvatar ? (
+                      <div className="h-8 w-8 overflow-hidden rounded-full border border-border/70 bg-muted/40" aria-label="Chosen avatar">
+                        <div className="h-full w-full scale-[1.85]">{chosenAvatar.svg}</div>
+                      </div>
+                    ) : null}
+                  </div>
+                  {!hasChosenAvatar ? <AvatarPicker /> : null}
                 </>
               ) : (
                 <p className="text-xs text-muted-foreground">Account section hidden. Tap Show to expand.</p>

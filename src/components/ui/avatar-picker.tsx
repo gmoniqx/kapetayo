@@ -4,13 +4,13 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 
-interface AvatarOption {
+export interface AvatarOption {
   id: number;
   svg: React.ReactNode;
   alt: string;
 }
 
-const avatarOptions: AvatarOption[] = [
+export const avatarOptions: AvatarOption[] = [
   {
     id: 1,
     svg: (

@@ -7,6 +7,17 @@ import developerPhoto from "@/assets/developer-photo.jpg";
 export default function DeveloperPage() {
   const navigate = useNavigate();
 
+  const handleResetOnboarding = () => {
+    localStorage.removeItem("kapetayo.account.name");
+    localStorage.removeItem("kapetayo.account.bio");
+    localStorage.removeItem("kapetayo.account.visible");
+    localStorage.removeItem("kapetayo.account.bookmarks");
+    localStorage.removeItem("kapetayo.account.visited");
+    localStorage.removeItem("kapetayo.account.avatarConfirmedId");
+    localStorage.removeItem("kapetayo.account.onboarded");
+    window.location.assign("/welcome");
+  };
+
   return (
     <MobilePageShell>
       <div className="space-y-4">
@@ -45,6 +56,12 @@ export default function DeveloperPage() {
             </p>
             <p><span className="font-medium">Focus:</span> Made for coffee lovers.</p>
             <p><span className="font-medium">Version:</span> 1.0</p>
+          </div>
+
+          <div className="pt-2">
+            <Button variant="outline" size="sm" className="rounded-full text-xs" onClick={handleResetOnboarding}>
+              Reset onboarding
+            </Button>
           </div>
         </section>
       </div>
