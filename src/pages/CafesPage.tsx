@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search, Coffee, House, Bookmark, Clock3, Info, Eye, EyeOff } from "lucide-react";
+import { Search, Coffee, House, Bookmark, Clock3, Info, Eye, EyeOff, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { cafes, type Cafe } from "@/data/cafes";
 import { Input } from "@/components/ui/input";
@@ -395,10 +395,11 @@ export default function CafesPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 rounded-full px-3 text-[11px]"
+                            className="h-7 w-7 rounded-full p-0"
                             onClick={() => toggleBookmark(cafe.id)}
+                            aria-label="Remove bookmark"
                           >
-                            Remove
+                            <Bookmark className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
@@ -430,10 +431,11 @@ export default function CafesPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 rounded-full px-3 text-[11px]"
+                            className="h-7 w-7 rounded-full p-0"
                             onClick={() => toggleVisited(cafe.id)}
+                            aria-label="Remove visited"
                           >
-                            Remove
+                            <Check className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
@@ -466,18 +468,20 @@ export default function CafesPage() {
                           <Button
                             size="sm"
                             variant={bookmarkedCafeIds.includes(cafe.id) ? "default" : "outline"}
-                            className="h-7 rounded-full px-3 text-[11px]"
+                            className="h-7 w-7 rounded-full p-0"
                             onClick={() => toggleBookmark(cafe.id)}
+                            aria-label={bookmarkedCafeIds.includes(cafe.id) ? "Remove bookmark" : "Save cafe"}
                           >
-                            {bookmarkedCafeIds.includes(cafe.id) ? "Saved" : "Save"}
+                            <Bookmark className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             size="sm"
                             variant={visitedCafeIds.includes(cafe.id) ? "default" : "outline"}
-                            className="h-7 rounded-full px-3 text-[11px]"
+                            className="h-7 w-7 rounded-full p-0"
                             onClick={() => toggleVisited(cafe.id)}
+                            aria-label={visitedCafeIds.includes(cafe.id) ? "Remove visited" : "Mark as visited"}
                           >
-                            {visitedCafeIds.includes(cafe.id) ? "Visited" : "Mark Visited"}
+                            <Check className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
@@ -529,10 +533,11 @@ export default function CafesPage() {
                 <Button
                   size="sm"
                   variant={visitedCafeIds.includes(selectedCafe.id) ? "default" : "outline"}
-                  className="rounded-full text-xs"
+                  className="h-8 w-8 rounded-full p-0"
                   onClick={() => toggleVisited(selectedCafe.id)}
+                  aria-label={visitedCafeIds.includes(selectedCafe.id) ? "Remove from visited" : "Add to visited"}
                 >
-                  {visitedCafeIds.includes(selectedCafe.id) ? "Remove from visited" : "Add to visited"}
+                  <Check className="h-4 w-4" />
                 </Button>
               </div>
             </div>
