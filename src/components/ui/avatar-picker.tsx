@@ -129,7 +129,7 @@ const selectedVariants = {
   },
 };
 
-export function AvatarPicker() {
+export function AvatarPicker({ onConfirm }: { onConfirm?: (avatarId: number) => void }) {
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarOption>(avatarOptions[0]);
   const [confirmedAvatarId, setConfirmedAvatarId] = useState<number>(avatarOptions[0].id);
   const [rotationCount, setRotationCount] = useState(0);
@@ -153,6 +153,7 @@ export function AvatarPicker() {
   const handleAvatarSelect = (avatar: AvatarOption) => {
     if (avatar.id === selectedAvatar.id) {
       setConfirmedAvatarId(avatar.id);
+      onConfirm?.(avatar.id);
       return;
     }
 

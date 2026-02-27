@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search, Coffee, House, Bookmark, Clock3, Info, Eye, EyeOff, Check } from "lucide-react";
+import { Search, Coffee, House, Bookmark, Clock3, Info, Eye, EyeOff, Check, MapPin, X, ExternalLink, GraduationCap, Pencil } from "lucide-react";
 import { motion } from "framer-motion";
 import { cafes, type Cafe } from "@/data/cafes";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { MobilePageShell } from "@/components/layout/MobilePageShell";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { avatarOptions, AvatarPicker } from "@/components/ui/avatar-picker";
+
+/** Converts dollar-sign price tiers to peso signs for display (data stays as "$" | "$$" | "$$$") */
+const toPesoRange = (range: string) => range.replace(/\$/g, "₱");
 
 const normalizeSearch = (value: string) =>
   value
@@ -74,6 +77,8 @@ export default function CafesPage() {
   );
   const [bookmarkedCafeIds, setBookmarkedCafeIds] = useState<string[]>(["2", "14", "1"]);
   const [visitedCafeIds, setVisitedCafeIds] = useState<string[]>(["3", "5"]);
+  const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
+  const [isAvatarChangeOpen, setIsAvatarChangeOpen] = useState(false);
   const isHomePage = location.pathname === "/";
   const isDashboardPage = location.pathname === "/dashboard";
   const isCafesPage = location.pathname === "/cafes";
@@ -149,8 +154,16 @@ export default function CafesPage() {
     return avatarOptions.find((avatar) => avatar.id === chosenAvatarId) ?? null;
   }, [chosenAvatarId]);
 
+  /** Top tags by frequency across all cafes, capped at 8 */
+  const popularTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    cafes.forEach((c) => c.tags.forEach((tag) => counts.set(tag, (counts.get(tag) ?? 0) + 1)));
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([tag]) => tag);
+  }, []);
+
   const filtered = useMemo(() => {
     return cafes.filter((c) => {
+      if (activeTagFilter && !c.tags.includes(activeTagFilter)) return false;
       if (search.trim()) {
         const queryTokens = normalizeSearch(search).split(" ").filter(Boolean);
 
@@ -183,11 +196,16 @@ export default function CafesPage() {
       }
       return true;
     });
-  }, [search]);
+  }, [search, activeTagFilter]);
 
   const mustVisit = cafes.slice(0, 3);
   const bookmarkedCafes = useMemo(() => cafes.filter((cafe) => bookmarkedCafeIds.includes(cafe.id)), [bookmarkedCafeIds]);
   const visitedCafes = useMemo(() => cafes.filter((cafe) => visitedCafeIds.includes(cafe.id)), [visitedCafeIds]);
+
+  const handleAvatarConfirm = (avatarId: number) => {
+    setChosenAvatarId(avatarId);
+    setHasChosenAvatar(true);
+  };
 
   const toggleBookmark = (cafeId: string) => {
     setBookmarkedCafeIds((currentIds) =>
@@ -212,6 +230,9 @@ export default function CafesPage() {
     description: cafe.description,
     brandName: cafe.address,
     promoCode: cafe.hours,
+    priceRange: cafe.priceRange,
+    studentFriendly: cafe.studentFriendly,
+    tags: cafe.tags,
   }));
   const menuItems: MenuBarItem[] = [
     { icon: House, label: "Home" },
@@ -258,17 +279,47 @@ export default function CafesPage() {
           </motion.div>
 
           {!isHomePage ? (
-            <motion.div className="w-full" whileFocus={{ scale: 1.01 }} transition={{ duration: 0.2 }}>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search cafes..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="h-11 rounded-2xl border-border/70 bg-card pl-9 soft-transition"
-                />
-              </div>
-            </motion.div>
+            <div className="space-y-2">
+              <motion.div className="w-full" whileFocus={{ scale: 1.01 }} transition={{ duration: 0.2 }}>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search cafes..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className={`h-11 rounded-2xl border-border/70 bg-card pl-9 soft-transition ${hasSearch ? "pr-9" : ""}`}
+                  />
+                  {hasSearch ? (
+                    <button
+                      type="button"
+                      onClick={() => setSearch("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label="Clear search"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  ) : null}
+                </div>
+              </motion.div>
+              {popularTags.length > 0 ? (
+                <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+                  {popularTags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setActiveTagFilter(activeTagFilter === tag ? null : tag)}
+                      className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                        activeTagFilter === tag
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-card border border-border/70 text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           ) : null}
 
           <motion.div className="flex items-center justify-center gap-2" whileHover={{ y: -1 }} transition={{ duration: 0.2 }}>
@@ -293,54 +344,78 @@ export default function CafesPage() {
 
           {isHomePage ? (
             <motion.section
-              className="space-y-2 rounded-2xl border border-border/70 bg-card p-3"
+              className="space-y-3 rounded-2xl border border-border/70 bg-card p-3"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
             >
+              {/* Header row */}
               <div className="flex items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-muted-foreground">Account</h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 rounded-full px-2 text-[11px]"
-                  onClick={() => setIsAccountVisible((currentValue) => !currentValue)}
-                >
-                  {isAccountVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                  <span className="ml-1">{isAccountVisible ? "Hide" : "Show"}</span>
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 rounded-full p-0"
+                    onClick={() => { setIsAvatarChangeOpen(false); setIsAccountOpen(true); }}
+                    aria-label="Edit account"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 rounded-full px-2 text-[11px]"
+                    onClick={() => setIsAccountVisible((v) => !v)}
+                  >
+                    {isAccountVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    <span className="ml-1">{isAccountVisible ? "Hide" : "Show"}</span>
+                  </Button>
+                </div>
               </div>
+
               {isAccountVisible ? (
                 <>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">{displayName} • {accountBio}</p>
-                    {chosenAvatar ? (
-                      <div className="h-8 w-8 overflow-hidden rounded-full border border-border/70 bg-muted/40" aria-label="Chosen avatar">
-                        <div className="h-full w-full scale-[1.85]">{chosenAvatar.svg}</div>
+                  {/* Avatar + identity */}
+                  <div className="flex items-center gap-3">
+                    <div className="relative shrink-0">
+                      <div className="h-14 w-14 overflow-hidden rounded-full border-2 border-primary/40 bg-muted/40">
+                        {chosenAvatar ? (
+                          <div className="h-full w-full scale-[1.85] flex items-center justify-center">{chosenAvatar.svg}</div>
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-xl font-bold text-muted-foreground">
+                            {displayName[0]?.toUpperCase()}
+                          </div>
+                        )}
                       </div>
-                    ) : null}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-card-foreground truncate">{displayName}</p>
+                      <p className="text-xs text-muted-foreground truncate">{accountBio}</p>
+                      {/* Stats */}
+                      <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
+                        <span><span className="font-medium text-card-foreground">{bookmarkedCafes.length}</span> saved</span>
+                        <span><span className="font-medium text-card-foreground">{visitedCafes.length}</span> visited</span>
+                      </div>
+                    </div>
                   </div>
-                  {!hasChosenAvatar ? <AvatarPicker /> : null}
+
+                  {/* Avatar picker for first-time users */}
+                  {!hasChosenAvatar ? <AvatarPicker onConfirm={handleAvatarConfirm} /> : null}
                 </>
               ) : (
                 <p className="text-xs text-muted-foreground">Account section hidden. Tap Show to expand.</p>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full rounded-full text-xs"
-                onClick={() => setIsAccountOpen(true)}
-              >
-                Tap to view account
-              </Button>
             </motion.section>
           ) : null}
 
           {!isHomePage ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between px-1">
-                <h2 className="text-lg font-semibold">{hasSearch ? "Results" : "Popular Cafes"}</h2>
-                <p className="text-sm text-muted-foreground">Tap card for details</p>
+                <h2 className="text-lg font-semibold">
+                  {hasSearch ? "Results" : activeTagFilter ? `${activeTagFilter} Cafes` : "Popular Cafes"}
+                </h2>
+                <p className="text-sm text-muted-foreground">{filtered.length} cafe{filtered.length !== 1 ? "s" : ""}</p>
               </div>
 
               {filtered.length === 0 ? (
@@ -380,15 +455,26 @@ export default function CafesPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, ease: "easeOut" }}
               >
-                <div className="flex items-center gap-2">
-                  <Bookmark className="h-4 w-4 text-primary" />
-                  <h2 className="text-lg font-semibold">Your Bookmarks</h2>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Bookmark className="h-4 w-4 text-primary" />
+                    <h2 className="text-lg font-semibold">Your Bookmarks</h2>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{bookmarkedCafes.length} saved</span>
                 </div>
                 {bookmarkedCafes.length > 0 ? (
                   <div className="grid gap-3">
                     {bookmarkedCafes.map((cafe) => (
-                      <div key={cafe.id} className="rounded-2xl border border-border/70 bg-card p-3">
-                        <p className="text-base font-semibold text-card-foreground">{cafe.name}</p>
+                      <button
+                        key={cafe.id}
+                        type="button"
+                        className="w-full text-left rounded-2xl border border-border/70 bg-muted/30 p-3 hover:border-primary/40 transition-colors"
+                        onClick={() => { markVisited(cafe.id); setSelectedCafe(cafe); }}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-base font-semibold text-card-foreground">{cafe.name}</p>
+                          <span className="text-xs font-medium text-muted-foreground shrink-0 mt-0.5">{toPesoRange(cafe.priceRange)}</span>
+                        </div>
                         <p className="mt-1 text-sm text-muted-foreground">{cafe.address}</p>
                         <div className="mt-2 flex items-center justify-between gap-2">
                           <p className="text-xs text-muted-foreground">{cafe.hours}</p>
@@ -396,17 +482,17 @@ export default function CafesPage() {
                             size="sm"
                             variant="outline"
                             className="h-7 w-7 rounded-full p-0"
-                            onClick={() => toggleBookmark(cafe.id)}
+                            onClick={(e) => { e.stopPropagation(); toggleBookmark(cafe.id); }}
                             aria-label="Remove bookmark"
                           >
                             <Bookmark className="h-3.5 w-3.5" />
                           </Button>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No bookmarks yet. Tap cafes to save them.</p>
+                  <p className="text-sm text-muted-foreground">No bookmarks yet. Tap a cafe card to save it.</p>
                 )}
               </motion.section>
 
@@ -416,15 +502,26 @@ export default function CafesPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, ease: "easeOut" }}
               >
-                <div className="flex items-center gap-2">
-                  <Clock3 className="h-4 w-4 text-primary" />
-                  <h2 className="text-lg font-semibold">Visited Cafes</h2>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Clock3 className="h-4 w-4 text-primary" />
+                    <h2 className="text-lg font-semibold">Visited Cafes</h2>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{visitedCafes.length} visited</span>
                 </div>
                 {visitedCafes.length > 0 ? (
                   <div className="grid gap-3">
                     {visitedCafes.map((cafe) => (
-                      <div key={cafe.id} className="rounded-2xl border border-border/70 bg-card p-3">
-                        <p className="text-base font-semibold text-card-foreground">{cafe.name}</p>
+                      <button
+                        key={cafe.id}
+                        type="button"
+                        className="w-full text-left rounded-2xl border border-border/70 bg-muted/30 p-3 hover:border-primary/40 transition-colors"
+                        onClick={() => setSelectedCafe(cafe)}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-base font-semibold text-card-foreground">{cafe.name}</p>
+                          <span className="text-xs font-medium text-muted-foreground shrink-0 mt-0.5">{toPesoRange(cafe.priceRange)}</span>
+                        </div>
                         <p className="mt-1 text-sm text-muted-foreground">{cafe.address}</p>
                         <div className="mt-2 flex items-center justify-between gap-2">
                           <p className="text-xs text-muted-foreground">{cafe.hours}</p>
@@ -432,17 +529,17 @@ export default function CafesPage() {
                             size="sm"
                             variant="outline"
                             className="h-7 w-7 rounded-full p-0"
-                            onClick={() => toggleVisited(cafe.id)}
+                            onClick={(e) => { e.stopPropagation(); toggleVisited(cafe.id); }}
                             aria-label="Remove visited"
                           >
                             <Check className="h-3.5 w-3.5" />
                           </Button>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No visited cafes yet. Opening cafe details marks them as visited.</p>
+                  <p className="text-sm text-muted-foreground">No visited cafes yet. Opening a cafe marks it as visited.</p>
                 )}
               </motion.section>
             </>
@@ -459,17 +556,30 @@ export default function CafesPage() {
                 <h2 className="text-lg font-semibold">Must Visit</h2>
                 <div className="grid gap-3">
                   {mustVisit.map((cafe) => (
-                    <div key={cafe.id} className="rounded-2xl border border-border/70 bg-card p-3">
-                      <p className="text-base font-semibold text-card-foreground">{cafe.name}</p>
+                    <button
+                      key={cafe.id}
+                      type="button"
+                      className="w-full text-left rounded-2xl border border-border/70 bg-muted/30 p-3 hover:border-primary/40 transition-colors"
+                      onClick={() => { markVisited(cafe.id); setSelectedCafe(cafe); }}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-base font-semibold text-card-foreground">{cafe.name}</p>
+                        <div className="flex items-center gap-1 shrink-0 mt-0.5">
+                          {cafe.studentFriendly ? (
+                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">Student</span>
+                          ) : null}
+                          <span className="text-xs font-medium text-muted-foreground">{toPesoRange(cafe.priceRange)}</span>
+                        </div>
+                      </div>
                       <p className="mt-1 text-sm text-muted-foreground">{cafe.address}</p>
                       <div className="mt-2 flex items-center justify-between gap-2">
-                        <p className="text-sm text-muted-foreground">{cafe.hours}</p>
+                        <p className="text-xs text-muted-foreground">{cafe.hours}</p>
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
                             variant={bookmarkedCafeIds.includes(cafe.id) ? "default" : "outline"}
                             className="h-7 w-7 rounded-full p-0"
-                            onClick={() => toggleBookmark(cafe.id)}
+                            onClick={(e) => { e.stopPropagation(); toggleBookmark(cafe.id); }}
                             aria-label={bookmarkedCafeIds.includes(cafe.id) ? "Remove bookmark" : "Save cafe"}
                           >
                             <Bookmark className="h-3.5 w-3.5" />
@@ -478,14 +588,14 @@ export default function CafesPage() {
                             size="sm"
                             variant={visitedCafeIds.includes(cafe.id) ? "default" : "outline"}
                             className="h-7 w-7 rounded-full p-0"
-                            onClick={() => toggleVisited(cafe.id)}
+                            onClick={(e) => { e.stopPropagation(); toggleVisited(cafe.id); }}
                             aria-label={visitedCafeIds.includes(cafe.id) ? "Remove visited" : "Mark as visited"}
                           >
                             <Check className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </motion.section>
@@ -506,9 +616,26 @@ export default function CafesPage() {
                 <DialogDescription>{selectedCafe.description}</DialogDescription>
               </DialogHeader>
 
+              <div className="flex flex-wrap gap-1.5">
+                <span className="rounded-full border border-border/70 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                  {selectedCafe.priceRange === "$" ? "Budget-friendly" : selectedCafe.priceRange === "$$" ? "Mid-range" : "Premium"} · {toPesoRange(selectedCafe.priceRange)}
+                </span>
+                {selectedCafe.studentFriendly ? (
+                  <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                    <GraduationCap className="h-3 w-3" /> Student Friendly
+                  </span>
+                ) : null}
+                {selectedCafe.tags.map((tag) => (
+                  <span key={tag} className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground">{tag}</span>
+                ))}
+              </div>
+
               <div className="space-y-1 text-sm">
-                <p><span className="font-medium">Exact location:</span> {selectedCafe.address}</p>
-                <p><span className="font-medium">Hours:</span> {selectedCafe.hours}</p>
+                <div className="flex items-start gap-1.5">
+                  <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                  <p>{selectedCafe.address}</p>
+                </div>
+                <p className="pl-5.5"><span className="font-medium">Hours:</span> {selectedCafe.hours}</p>
               </div>
 
               <div className="space-y-2">
@@ -529,29 +656,91 @@ export default function CafesPage() {
                 )}
               </div>
 
-              <div className="flex items-center justify-end">
-                <Button
-                  size="sm"
-                  variant={visitedCafeIds.includes(selectedCafe.id) ? "default" : "outline"}
-                  className="h-8 w-8 rounded-full p-0"
-                  onClick={() => toggleVisited(selectedCafe.id)}
-                  aria-label={visitedCafeIds.includes(selectedCafe.id) ? "Remove from visited" : "Add to visited"}
+              <div className="flex items-center justify-between">
+                <a
+                  href={selectedCafe.mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs text-primary hover:underline"
                 >
-                  <Check className="h-4 w-4" />
-                </Button>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Open in Maps
+                </a>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant={bookmarkedCafeIds.includes(selectedCafe.id) ? "default" : "outline"}
+                    className="h-8 w-8 rounded-full p-0"
+                    onClick={() => toggleBookmark(selectedCafe.id)}
+                    aria-label={bookmarkedCafeIds.includes(selectedCafe.id) ? "Remove bookmark" : "Save to bookmarks"}
+                  >
+                    <Bookmark className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={visitedCafeIds.includes(selectedCafe.id) ? "default" : "outline"}
+                    className="h-8 w-8 rounded-full p-0"
+                    onClick={() => toggleVisited(selectedCafe.id)}
+                    aria-label={visitedCafeIds.includes(selectedCafe.id) ? "Remove from visited" : "Mark as visited"}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           ) : null}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isAccountOpen} onOpenChange={setIsAccountOpen}>
+      <Dialog
+        open={isAccountOpen}
+        onOpenChange={(open) => {
+          setIsAccountOpen(open);
+          if (!open) {
+            setIsAvatarChangeOpen(false);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-md text-left">
           <div className="space-y-4">
             <DialogHeader>
               <DialogTitle>My Account</DialogTitle>
-              <DialogDescription>Edit your profile details. Changes are auto-saved.</DialogDescription>
+              <DialogDescription>Changes are saved automatically.</DialogDescription>
             </DialogHeader>
+
+            {/* Avatar preview */}
+            <div className="flex flex-col items-center gap-2 pt-1">
+              <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-primary/40 bg-muted/40">
+                {chosenAvatar ? (
+                  <div className="h-full w-full scale-[1.85] flex items-center justify-center">{chosenAvatar.svg}</div>
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-2xl font-bold text-muted-foreground">
+                    {displayName[0]?.toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                className="text-xs text-primary hover:underline"
+                onClick={() => setIsAvatarChangeOpen((v) => !v)}
+              >
+                {isAvatarChangeOpen ? "Hide avatar picker" : "Change avatar"}
+              </button>
+              {isAvatarChangeOpen ? <AvatarPicker onConfirm={handleAvatarConfirm} /> : null}
+            </div>
+
+            {/* Stats */}
+            <div className="flex items-center justify-center gap-6 rounded-xl bg-muted/40 py-2.5">
+              <div className="text-center">
+                <p className="text-base font-bold text-card-foreground">{bookmarkedCafes.length}</p>
+                <p className="text-[11px] text-muted-foreground">Saved</p>
+              </div>
+              <div className="h-6 w-px bg-border" />
+              <div className="text-center">
+                <p className="text-base font-bold text-card-foreground">{visitedCafes.length}</p>
+                <p className="text-[11px] text-muted-foreground">Visited</p>
+              </div>
+            </div>
 
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground">Display Name</p>
@@ -573,11 +762,9 @@ export default function CafesPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-2">
-              <Button size="sm" className="rounded-full text-xs" onClick={() => setIsAccountOpen(false)}>
-                Save Changes
-              </Button>
-            </div>
+            <Button size="sm" className="w-full rounded-full text-xs" onClick={() => setIsAccountOpen(false)}>
+              Done
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
